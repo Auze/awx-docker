@@ -1,0 +1,109 @@
+version: '2'
+services:
+
+  nginx:
+    container_name: reverse_nginx
+    links:
+      - web
+    depends_on:
+      - web
+      - task
+      - rabbitmq
+      - memcached
+      - postgres
+    hostname: reverse_nginx
+    image: nginx:latest
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      - ${PWD}/nginx/:/var/log/nginx/
+      - ${PWD}/nginx/:/etc/nginx/
+      - ${PWD}/ssl/:/etc/ssl/cert/
+
+  web:
+    image: ansible/awx_web:latest
+    container_name: awx_web
+    depends_on:
+      - rabbitmq
+      - memcached
+      - postgres
+    ports:
+      - "127.0.0.1:8043:8052"
+    hostname: awxweb
+    user: root
+    restart: unless-stopped
+    volumes:
+      - "${PWD}/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "${PWD}/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "${PWD}/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "/home/awx/projects:/var/lib/awx/projects:rw"
+    dns:
+      - 192.168.1.213
+      - 192.168.93.200
+    environment:
+      http_proxy: 
+      https_proxy: 
+      no_proxy: 
+
+  task:
+    image: ansible/awx_task:latest
+    container_name: awx_task
+    depends_on:
+      - rabbitmq
+      - memcached
+      - web
+      - postgres
+    hostname: awx
+    user: root
+    restart: unless-stopped
+    volumes:
+      - "${PWD}/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "${PWD}/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "${PWD}/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "/home/awx/projects:/var/lib/awx/projects:rw"
+    dns:
+      - 192.168.1.213
+      - 192.168.93.200
+    environment:
+      http_proxy: 
+      https_proxy: 
+      no_proxy: 
+
+  rabbitmq:
+    image: ansible/awx_rabbitmq:latest
+    container_name: awx_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_VHOST: "awx"
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "wkCVXUkNByHogCod"
+      RABBITMQ_ERLANG_COOKIE: cookiemonster
+      http_proxy: 
+      https_proxy: 
+      no_proxy: 
+
+  memcached:
+    image: "memcached:alpine"
+    container_name: awx_memcached
+    restart: unless-stopped
+    environment:
+      http_proxy: 
+      https_proxy: 
+      no_proxy: 
+
+  postgres:
+    image: postgres:9.6
+    container_name: awx_postgres
+    restart: unless-stopped
+    volumes:
+      - /var/lib/postgres/pgdocker:/var/lib/postgresql/data:Z
+    environment:
+      POSTGRES_USER: awx
+      POSTGRES_PASSWORD: awxpass
+      POSTGRES_DB: awx
+      PGDATA: /var/lib/postgresql/data/pgdata
+      http_proxy: 
+      https_proxy: 
+      no_proxy: 

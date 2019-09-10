@@ -1,0 +1,5 @@
+SECRET_KEY
+ssl
+credentials.py
+environment.sh
+*.log
