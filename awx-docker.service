@@ -1,0 +1,23 @@
+# Save as e.g. /etc/systemd/system/awx-docker.service
+[Unit]
+Description=AWX-Docker Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RemainAfterExit=yes
+StandardError=null
+StandardOutput=null
+
+# Shutdown container (if running) when unit is stopped
+ExecStartPre=/usr/bin/docker-compose -f /srv/awx-docker/docker-compose.yml down -v
+
+# Start container when unit is started
+ExecStart=/usr/bin/docker-compose -f /srv/awx-docker/docker-compose.yml up -d
+
+# Stop container when unit is stopped
+ExecStop=/usr/bin/docker-compose -f /srv/awx-docker/docker-compose.yml down -v
+
+[Install]
+WantedBy=multi-user.target

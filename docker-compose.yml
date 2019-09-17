@@ -18,12 +18,12 @@ services:
       - 443:443
     restart: unless-stopped
     volumes:
-      - ${PWD}/nginx/:/var/log/nginx/
-      - ${PWD}/nginx/:/etc/nginx/
-      - ${PWD}/ssl/:/etc/ssl/cert/
+      - "./nginx/:/var/log/nginx/"
+      - "./nginx/:/etc/nginx/"
+      - "./ssl/:/etc/ssl/cert/"
 
   web:
-    image: ansible/awx_web:latest
+    image: ansible/awx_web:7.0.0
     container_name: awx_web
     depends_on:
       - rabbitmq
@@ -35,20 +35,20 @@ services:
     user: root
     restart: unless-stopped
     volumes:
-      - "${PWD}/SECRET_KEY:/etc/tower/SECRET_KEY"
-      - "${PWD}/environment.sh:/etc/tower/conf.d/environment.sh"
-      - "${PWD}/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "./secret/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "./config/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "./config/credentials.py:/etc/tower/conf.d/credentials.py"
       - "/home/awx/projects:/var/lib/awx/projects:rw"
     dns:
-      - 192.168.1.213
-      - 192.168.93.200
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       http_proxy: 
       https_proxy: 
       no_proxy: 
 
   task:
-    image: ansible/awx_task:latest
+    image: ansible/awx_task:7.0.0
     container_name: awx_task
     depends_on:
       - rabbitmq
@@ -59,26 +59,26 @@ services:
     user: root
     restart: unless-stopped
     volumes:
-      - "${PWD}/SECRET_KEY:/etc/tower/SECRET_KEY"
-      - "${PWD}/environment.sh:/etc/tower/conf.d/environment.sh"
-      - "${PWD}/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "./secret/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "./config/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "./config/credentials.py:/etc/tower/conf.d/credentials.py"
       - "/home/awx/projects:/var/lib/awx/projects:rw"
     dns:
-      - 192.168.1.213
-      - 192.168.93.200
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       http_proxy: 
       https_proxy: 
       no_proxy: 
 
   rabbitmq:
-    image: ansible/awx_rabbitmq:latest
+    image: ansible/awx_rabbitmq:3.7.4
     container_name: awx_rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_VHOST: "awx"
       RABBITMQ_DEFAULT_USER: "guest"
-      RABBITMQ_DEFAULT_PASS: "wkCVXUkNByHogCod"
+      RABBITMQ_DEFAULT_PASS: "rabbitpasswd"
       RABBITMQ_ERLANG_COOKIE: cookiemonster
       http_proxy: 
       https_proxy: 
@@ -94,11 +94,11 @@ services:
       no_proxy: 
 
   postgres:
-    image: postgres:9.6
+    image: postgres:10
     container_name: awx_postgres
     restart: unless-stopped
     volumes:
-      - /var/lib/postgres/pgdocker:/var/lib/postgresql/data:Z
+      - /var/lib/postgres/pgdocker/10/data:/var/lib/postgresql/data:Z
     environment:
       POSTGRES_USER: awx
       POSTGRES_PASSWORD: awxpass
